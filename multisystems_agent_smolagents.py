@@ -1,7 +1,15 @@
 import math 
+import os
+from PIL import Image
 from typing import Optional, Tuple
 from smolagents import tool
+from smolagents import CodeAgent, DuckDuckGoSearchTool, VisitWebpageTool, LiteLLMModel
 
+
+model = LiteLLMModel(
+    model_id="ollama_chat/llama3.2",
+    api_key = "ollama"
+)
 
 
 @tool
@@ -50,4 +58,22 @@ def calculate_cargo_travel_time(
 
     return round(flight_time, 2)
 
-print(calculate_cargo_travel_time((41.8781, -87.6298), (-33.8688, 151.2093)))
+
+agent = CodeAgent(
+    model=model,
+    tools=[DuckDuckGoSearchTool(), VisitWebpageTool(), calculate_cargo_travel_time],
+    additional_authorized_imports=["pandas"],
+    max_steps=20,
+)
+
+
+task = """
+Step 1: Find a list of Batman filming locations and their coordinates.
+Step 2: Calculate the travel time from (40.7128, -74.0060) to each filming location.
+Step 3: Return the results as a Pandas DataFrame.
+"""
+
+# task = """Find all Batman filming locations in the world, calculate the time to transfer via cargo plane to here (we're in Gotham, 40.7128° N, 74.0060° W), and return them to me as a pandas dataframe.
+# Also give me some supercar factories with the same cargo plane transfer time."""
+
+print(agent.run(task))
