@@ -131,7 +131,7 @@ manager_agent = CodeAgent(
 )
 
 
-manager_agent.visualize()
+# Single Agent type:
 # task = """
 # Step 1: Find a list of Batman filming locations and their coordinates.
 # Step 2: Calculate the travel time from (40.7128, -74.0060) to each filming location.
@@ -142,3 +142,25 @@ manager_agent.visualize()
 # # Also give me some supercar factories with the same cargo plane transfer time."""
 
 # print(agent.run(task))
+
+# Muti Agents:
+# To Visualize the Agent architecture:
+#manager_agent.visualize()
+
+
+manager_agent.run("""
+Find all Batman filming locations in the world, calculate the time to transfer via cargo plane to here (we're in Gotham, 40.7128° N, 74.0060° W).
+Also give me some supercar factories with the same cargo plane transfer time. You need at least 6 points in total.
+Represent this as spatial map of the world, with the locations represented as scatter points with a color that depends on the travel time, and save it to saved_map.png!
+
+Here's an example of how to plot and return a map:
+import plotly.express as px
+df = px.data.carshare()
+fig = px.scatter_map(df, lat="centroid_lat", lon="centroid_lon", text="name", color="peak_hour", size=100,
+     color_continuous_scale=px.colors.sequential.Magma, size_max=15, zoom=1)
+fig.show()
+fig.write_image("saved_image.png")
+final_answer(fig)
+
+Never try to process strings using code: when you have a string to read, just print it and you'll see it.
+""")
