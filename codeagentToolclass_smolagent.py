@@ -1,7 +1,6 @@
 from smolagents import Tool, CodeAgent, InferenceClientModel
 from smolagents import LiteLLMModel
 
-
 model = LiteLLMModel(
     model_id="ollama_chat/gemma",
     api_key = "ollama"
