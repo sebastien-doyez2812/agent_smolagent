@@ -20,8 +20,9 @@ async def main():
     ctx = Context(agent)
     questions = ["what is 2 times 2?", "Hey I am Seb!", "What's my name?"]
     for question in questions:
+        print(f"The question was {question}\n\n")
         response = await agent.run(question, ctx = ctx)
-        print(response)
+        print(f"Agent: {response}\n---------------------")
 
 
 asyncio.run(main())
