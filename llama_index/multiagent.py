@@ -26,7 +26,7 @@ def basic_search(query: str) -> str:
     return response.text
 
 #LLM:
-llm = Ollama(model= "qwen2.5", is_function_calling_model= True)
+llm = Ollama(model= "qwen2.5", )
 
 #Agents:
 calculator_agent = ReActAgent(
