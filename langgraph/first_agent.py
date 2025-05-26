@@ -3,7 +3,7 @@ import random
 from typing import Literal
 from IPython.display import Image, display
 from langgraph.graph import StateGraph, START, END
-
+import cv2
 
 class State(TypedDict):
     graph_state: str
@@ -52,3 +52,13 @@ builder.add_edge("node_3", END)
 
 # Add
 graph = builder.compile()
+
+# View
+display(Image(graph.get_graph().draw_mermaid_png()))
+
+
+# Invoke
+result = graph.invoke({"graph_state" : "Hi, this is Seb."})
+
+
+print(result)
