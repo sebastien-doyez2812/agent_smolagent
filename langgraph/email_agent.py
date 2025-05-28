@@ -70,16 +70,70 @@ def classify_email(state: EmailState):
         "messages": new_messages
     }
 
+def handle_spam(state: EmailState):
+    print(f"The email is a Spam, Reason: {state['spam_reason']}")
+    print("The email has been moved to the spam folder.")
+    
+    return {}
 
-def handle_spam(state : EmailState):
-
-
-def write_back(state : EmailState):
-
+def draft_response(state: EmailState):
+    """Alfred drafts a preliminary response for legitimate emails"""
+    email = state["email"]
+    category = state["email_category"] or "general"
+    
+    # Prepare our prompt for the LLM
+    prompt = f"""
+    As an assistant, draft a polite preliminary response to this email.
+    
+    Email:
+    From: {email['sender']}
+    Subject: {email['subject']}
+    Body: {email['body']}
+    
+    This email has been categorized as: {category}
+    
+    Draft a brief, professional response that Mr. Doyez can review and personalize before sending.
+    """
+    
+    # Call the LLM
+    messages = [HumanMessage(content=prompt)]
+    response = model.invoke(messages)
+    
+    # Update messages for tracking
+    new_messages = state.get("messages", []) + [
+        {"role": "user", "content": prompt},
+        {"role": "assistant", "content": response.content}
+    ]
+    
+    # Return state updates
+    return {
+        "email_draft": response.content,
+        "messages": new_messages
+    }
 
 
 def send_back_for_validation(state: EmailState):
+    email = state["email"]
+    
+    print("\n" + "="*50)
+    print(f"Sir, you've received an email from {email['sender']}.")
+    print(f"Subject: {email['subject']}")
+    print(f"Category: {state['email_category']}")
+    print("\nI've prepared a draft response for your review:")
+    print("-"*50)
+    print(state["email_draft"])
+    print("="*50 + "\n")
+    
+    # We're done processing this email
+    return {}
+
+
 # Edge:
+def route_email(state: EmailState) ->str:
+    if state["is_spam"]:
+        return "spam"
+    else:
+        return "legitimate"
 
 # StateGraph:
 
