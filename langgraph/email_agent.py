@@ -4,8 +4,15 @@ from langgraph.graph import StateGraph, START, END
 from langchain_core.messages import HumanMessage
 from langchain_ollama import OllamaLLM
 from IPython.display import Image, display
+from langfuse.callback import CallbackHandler
+
+# API key for langfuse:
+os.environ["LANGFUSE_PUBLIC_KEY"] = "pk-lf-1fe75db7-9979-4139-8f8a-69add99f16c1" 
+os.environ["LANGFUSE_SECRET_KEY"] = "sk-lf-21a66749-d2b2-4ab2-b23b-2e3f9c70963c"
+os.environ["LANGFUSE_HOST"] = "https://us.cloud.langfuse.com"
 
 
+langfuse_handler = CallbackHandler()
 # Define the State
 class EmailState(TypedDict):
     email: Dict[str, Any]
@@ -176,6 +183,9 @@ legitimate_email = {
     "body": "Dear Mr. Doyez, I was referred to you by a colleague and I'm interested in learning more about your consulting services. Could we schedule a call next week? Best regards, John Smith"
 }
 
+# Tests the SDK connection with the server
+langfuse_handler.auth_check()
+
 print("\nProcessing legitimate email...")
 legitimate_result = compiled_graph.invoke({
     "email": legitimate_email,
@@ -184,4 +194,6 @@ legitimate_result = compiled_graph.invoke({
     "email_category": None,
     "email_draft": None,
     "messages": []
-})
+},
+config={"callbacks": [langfuse_handler]})
+
