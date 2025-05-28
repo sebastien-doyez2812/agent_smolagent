@@ -7,12 +7,13 @@ from IPython.display import Image, display
 from langfuse.callback import CallbackHandler
 
 # API key for langfuse:
-os.environ["LANGFUSE_PUBLIC_KEY"] = "pk-lf-1fe75db7-9979-4139-8f8a-69add99f16c1" 
-os.environ["LANGFUSE_SECRET_KEY"] = "sk-lf-21a66749-d2b2-4ab2-b23b-2e3f9c70963c"
+os.environ["LANGFUSE_PUBLIC_KEY"] = "" 
+os.environ["LANGFUSE_SECRET_KEY"] = ""
 os.environ["LANGFUSE_HOST"] = "https://us.cloud.langfuse.com"
 
 
 langfuse_handler = CallbackHandler()
+
 # Define the State
 class EmailState(TypedDict):
     email: Dict[str, Any]
