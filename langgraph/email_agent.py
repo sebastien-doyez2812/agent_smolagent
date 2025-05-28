@@ -3,6 +3,8 @@ from typing import TypedDict, List, Dict, Any, Optional
 from langgraph.graph import StateGraph, START, END
 from langchain_core.messages import HumanMessage
 from langchain_ollama import OllamaLLM
+from IPython.display import Image, display
+
 
 # Define the State
 class EmailState(TypedDict):
@@ -15,7 +17,7 @@ class EmailState(TypedDict):
 
 
 # Definethe nodes
-model = OllamaLLM(name= "gemma")
+model = OllamaLLM(model="gemma")
 
 def read_email(state: EmailState):
     email = state["email"]
@@ -42,12 +44,13 @@ def classify_email(state: EmailState):
     rep = model.invoke(messages)
 
     # Is the email a spam?
-    response_text = rep.content.lower()
-    is_spam = "spam" in response_text and "not spam" not in response_text
+    response_text = rep.lower()
+    print(response_text)
+    is_spam = not "legitimate" in response_text
 
     spam_reason = None
     if is_spam and "reason" in response_text:
-        spam_reason = response_text.spilt("reason:")[1].strip()
+        spam_reason = response_text.split("reason:")[1].strip()
 
     # Check for the category:
     email_category = None
@@ -60,7 +63,7 @@ def classify_email(state: EmailState):
 
     new_messages = state.get("messages", []) + [
         {"role": "user", "content": prompt},
-        {"role": "assistant", "content": response.content}
+        {"role": "assistant", "content": rep}
     ]
 
     return{
@@ -102,12 +105,12 @@ def draft_response(state: EmailState):
     # Update messages for tracking
     new_messages = state.get("messages", []) + [
         {"role": "user", "content": prompt},
-        {"role": "assistant", "content": response.content}
+        {"role": "assistant", "content": response}
     ]
     
     # Return state updates
     return {
-        "email_draft": response.content,
+        "email_draft": response,
         "messages": new_messages
     }
 
@@ -136,7 +139,49 @@ def route_email(state: EmailState) ->str:
         return "legitimate"
 
 # StateGraph:
+email_graph = StateGraph(EmailState)
+
+# Add the node:
+email_graph.add_node("read_email", read_email)
+email_graph.add_node("classify_email", classify_email)
+email_graph.add_node("handle_spam", handle_spam)
+email_graph.add_node("draft_rep", draft_response)
+email_graph.add_node("send_to_validate", send_back_for_validation)
+
+# Make the edge (links between the nodes)
+email_graph.add_edge(START, "read_email")
+email_graph.add_edge("read_email", "classify_email")
+email_graph.add_conditional_edges("classify_email",
+route_email,
+    {
+        "spam": "handle_spam",
+        "legitimate": "draft_rep"
+    }   
+)
+email_graph.add_edge("handle_spam", END)
+email_graph.add_edge("draft_rep", "send_to_validate" )
+email_graph.add_edge("send_to_validate", END)
+
+compiled_graph = email_graph.compile()
 
 # Visualisation
+display(Image(compiled_graph.get_graph().draw_mermaid_png()))
+
 
 # Invokation
+
+legitimate_email = {
+    "sender": "john.smith@example.com",
+    "subject": "Question about your services",
+    "body": "Dear Mr. Doyez, I was referred to you by a colleague and I'm interested in learning more about your consulting services. Could we schedule a call next week? Best regards, John Smith"
+}
+
+print("\nProcessing legitimate email...")
+legitimate_result = compiled_graph.invoke({
+    "email": legitimate_email,
+    "is_spam": None,
+    "spam_reason": None,
+    "email_category": None,
+    "email_draft": None,
+    "messages": []
+})
