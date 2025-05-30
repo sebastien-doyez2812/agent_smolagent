@@ -1,6 +1,7 @@
 import base64
 from typing import List, TypedDict, Annotated, Optional
 from langchain_ollama import OllamaLLM
+from langchain_ollama import ChatOllama
 from langchain_core.messages import AnyMessage, SystemMessage, HumanMessage
 from langgraph.graph.message import add_messages
 from langgraph.graph import START, StateGraph
@@ -53,3 +54,17 @@ def extract_text(img_path:str) -> str:
         print(error_msg)
         return ""
     
+
+def devide(a: int, b:int) -> float:
+    return a/b
+
+
+tools = [
+    divide,
+    extract_text
+]
+
+
+llm = ChatOllama(model= gemma)
+
+llm.bind_tools(tools= tools)
