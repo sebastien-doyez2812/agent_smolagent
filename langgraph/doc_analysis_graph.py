@@ -92,3 +92,16 @@ def assistant (state: AgentState):
         "messages": [llm_with_tools.invoke([sys_msg] + state["messages"])],
         "input_file": state["input_file"]
     }
+
+
+builder = StateGraph(AgentState)
+
+# Define nodes: these do the work
+builder.add_node("assistant", assistant)
+builder.add_node("tools", ToolNode(tools))
+
+
+builder.add_edge(START, "assistant")
+builder.add_conditional_edges("assistant", tools_condition)
+builder.add_edge("tools", "assistant")
+react_graph = builder.compile()
