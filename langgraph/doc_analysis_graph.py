@@ -16,37 +16,43 @@ class AgentState(TypedDict):
     messages: Annotated[list[AnyMessage], add_messages]
 
 
-vision_llm = Ollama(model = "llava")
+vision_llm = OllamaLLM(model = "llava")
 
 def extract_text(img_path:str) -> str:
+    """
+    Extract text from an image file using a multimodal model
+
+
+    """
     all_text = ""
 
     try:
-        with open(img_path, 'rb') as image_file:
-            image_bytes = image_file.read()
+        # with open(img_path, 'rb') as image_file:
+        #     image_bytes = image_file.read()
 
-        image_base64 = base64.b64encode(image_bytes).decode("utf-8")
-        message = [
-            HumanMessage(
-                content=[
-                     {
-                        "type": "text",
-                        "text": (
-                            "Extract all the text from this image. "
-                            "Return only the extracted text, no explanations."
-                        ),
-                    },
-                    {
-                        "type": "image_url",
-                        "image_url": {
-                            "url": f"data:image/png;base64,{image_base64}"
-                        },
-                    },
-                ]
-            )
-        ]
-        rep = vision_llm.invoke(message)
+        # image_base64 = base64.b64encode(image_bytes).decode("utf-8")
+        # message = [
+        #     HumanMessage(
+        #         content=[
+        #              {
+        #                 "type": "text",
+        #                 "text": (
+        #                     "Extract all the text from this image. "
+        #                     "Return only the extracted text, no explanations."
+        #                 ),
+        #             },
+        #             {
+        #                 "type": "image_path",
+        #                 "image_path": {
+        #                     "path": img_path
+        #                 },
+        #             },
+        #         ]
+        #     )
+        # ]
+        rep = vision_llm.invoke(f"Extract the text from the image stored at {img_path}")
 
+        print(f"rep from llava is {rep}")
         all_text += rep +"\n\n"
         return all_text.strip()
     except Exception as e:
@@ -55,7 +61,10 @@ def extract_text(img_path:str) -> str:
         return ""
     
 
-def devide(a: int, b:int) -> float:
+def divide(a: int, b:int) -> float:
+    """
+    Divide a by b and return the result
+    """
     return a/b
 
 
@@ -65,7 +74,7 @@ tools = [
 ]
 
 
-llm = ChatOllama(model= gemma)
+llm = ChatOllama(model= "qwen2.5")
 
 llm_with_tools = llm.bind_tools(tools= tools)
 
@@ -85,7 +94,12 @@ def assistant (state: AgentState):
             Divide a and b
         """
     image = state["input_file"]
-    sys_msg = SystemMessage(content=f"You are a helpful butler named Assistant. You can analyse documents and run computations with provided tools:\n{textual_description_of_tool} \n You have access to some optional images. Currently the loaded image is: {image}")
+    sys_msg = SystemMessage(content= "You are a helpful assistant. Your tools are:\n"
+        "- extract_text(img_path): Extract text from an image.\n"
+        "- divide(a, b): Perform division.\n\n"
+        "Please respond with actions based on the task provided. "
+        "If an image is provided, assume it is for text extraction." \
+        f"If the user ask you to describe a picture, it's this image: Currently the loaded image is: {image}")
 
 
     return {
@@ -105,3 +119,22 @@ builder.add_edge(START, "assistant")
 builder.add_conditional_edges("assistant", tools_condition)
 builder.add_edge("tools", "assistant")
 react_graph = builder.compile()
+
+
+#Test:
+# Calculator:
+# msg = [HumanMessage("Divide 5 by 2")]
+# messages = react_graph.invoke({"message": msg, "input_file": None})
+
+# # Show the messages
+# for m in messages['messages']:
+#     m.pretty_print()
+
+# # Describe:
+msg = [HumanMessage(content= "Describe the image")]
+messages = react_graph.invoke({"message": msg, "input_file": "C:/Users/doyez/OneDrive/Images/Screenshots/Capture.png" })
+
+# Show the messages
+print("message = ", messages)
+for m in messages['messages']:
+    m.pretty_print()
